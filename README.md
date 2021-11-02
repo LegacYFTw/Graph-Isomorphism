@@ -2,6 +2,7 @@
 _Turbasu Chatterjee, Shah Ishmam Mohtashim, Akash Kundu_
 
 - [x] Initial Runs and Working code
+- [x] Data Generated and Generator code added
 - [ ] Energy convergence without noise for Isomorphic Pair (4-6 qubits) (p=1-10)
 - [ ] Energy convergence without noise for Non Isomorphic Pair (4-6 qubits) (p=1-10)
 - [ ] Energy convergence with noise Isomorphic Pair (4-6 qubits) (p=1-10)
