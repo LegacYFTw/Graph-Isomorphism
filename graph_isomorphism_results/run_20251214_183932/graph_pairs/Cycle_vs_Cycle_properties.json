@@ -1,0 +1,72 @@
+{
+  "pair_name": "Cycle vs Cycle",
+  "n_nodes": 4,
+  "graph1_properties": {
+    "nodes": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "edges": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ]
+    ],
+    "degree_sequence": [
+      2,
+      2,
+      2,
+      2
+    ],
+    "is_connected": true,
+    "density": 0.6666666666666666
+  },
+  "graph2_properties": {
+    "nodes": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "edges": [
+      [
+        0,
+        1
+      ],
+      [
+        0,
+        3
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ]
+    ],
+    "degree_sequence": [
+      2,
+      2,
+      2,
+      2
+    ],
+    "is_connected": true,
+    "density": 0.6666666666666666
+  }
+}

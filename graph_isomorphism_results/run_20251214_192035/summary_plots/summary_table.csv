@@ -1,0 +1,20 @@
+Pair Name,Nodes,Qubits,Success Rate,Best Energy,Mean Energy,Std Energy,Is Isomorphic
+Single Node,1,1,100.00%,0.000000,0.000000,0.000000,Yes
+Complete vs Complete,3,9,100.00%,0.000000,0.000000,0.000000,Yes
+Complete vs Permuted,3,9,100.00%,0.000000,0.000000,0.000000,Yes
+Cycle vs Cycle,3,9,100.00%,0.000000,0.000000,0.000000,Yes
+Cycle vs Path,3,9,0.00%,40.000000,40.000000,0.000000,No
+Star vs Star,3,9,100.00%,0.000000,0.000000,0.000000,Yes
+Random vs Random,3,9,86.67%,0.000000,10.666667,27.194771,Yes
+Complete vs Complete,4,16,100.00%,0.000000,0.000000,0.000000,Yes
+Complete vs Permuted,4,16,100.00%,0.000000,0.000000,0.000000,Yes
+Cycle vs Cycle,4,16,70.00%,0.000000,20.000000,32.249031,Yes
+Cycle vs Path,4,16,60.00%,0.000000,48.000000,68.818602,Yes
+Star vs Star,4,16,70.00%,0.000000,40.000000,61.967734,Yes
+Star vs Random,4,16,20.00%,0.000000,104.000000,82.365041,Yes
+Random vs Random,4,16,20.00%,0.000000,108.000000,78.076885,Yes
+Regular vs Regular,4,16,70.00%,0.000000,36.000000,63.118935,Yes
+Ladder vs Ladder,4,16,50.00%,0.000000,76.000000,76.837491,Yes
+Wheel vs Wheel,4,16,100.00%,0.000000,0.000000,0.000000,Yes
+Small World Pair (4 nodes),4,16,70.00%,0.000000,20.000000,32.249031,Yes
+Bipartite vs Bipartite (4 nodes),4,16,90.00%,0.000000,8.000000,24.000000,Yes
