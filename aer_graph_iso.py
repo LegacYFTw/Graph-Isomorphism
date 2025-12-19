@@ -193,152 +193,79 @@ class GraphIsoAnalyzer:
         self.shots = shots
         self.use_gpu = use_gpu
         
-        # Create the backend
-        self.backend = self._create_backend(use_gpu, shots)
+        # We no longer pre-create a single fixed backend here 
+        # because the method depends on the qubit count per run.
+        print(f"Initialized Analyzer (GPU preference: {use_gpu})")
+
+    def _get_dynamic_backend(self, n_qubits):
+        """Selects backend method based on qubit count."""
+        # Selection Logic
+        if n_qubits > 30:
+            method = 'matrix_product_state'
+            print(f"  > {n_qubits} qubits: Using Matrix Product State (MPS)")
+        else:
+            method = 'statevector'
+            print(f"  > {n_qubits} qubits: Using Statevector")
+
+        device = 'GPU' if self.use_gpu else 'CPU'
         
-        # Use BackendEstimator for QAOA (modern approach from IBM tutorial)
-        self.estimator = BackendEstimator(backend=self.backend)
-        self.estimator.set_options(shots=shots)
-        print("✓ Using BackendEstimator for QAOA")
-        
-        print(f"Initialized with:")
-        print(f"  Device: {'GPU' if use_gpu else 'CPU'}")
-        print(f"  Shots: {shots}")
-        
-        self.experiment_metadata = {
-            'start_time': datetime.now().isoformat(),
-            'qiskit_version': '1.0+',
-            'device': 'GPU' if use_gpu else 'CPU',
-            'shots': shots,
-            'estimator': 'BackendEstimator',
-            'optimizer': 'COBYLA',
-            'algorithm': 'QAOA with QAOAAnsatz'
-        }
-    
-    def _create_backend(self, use_gpu, shots):
-        """Create AerSimulator backend with GPU or CPU."""
-        try:
-            if use_gpu:
-                backend = AerSimulator(
-                    method='automatic',
-                    device='GPU',
-                    shots=shots,
-                    # cuStateVec_enable=True,
-                    # blocking_enable=True,
-                    # blocking_qubits=16,
-                    max_parallel_threads=0,
-                    max_parallel_experiments=1,
-                    max_parallel_shots=1
-                )
-                print("✓ GPU backend created successfully")
-            else:
-                backend = AerSimulator(
-                    method='automatic',
-                    device='CPU',
-                    shots=shots,
-                    max_parallel_threads=1
-                )
-                print("✓ CPU backend created successfully")
-            
-            return backend
-            
-        except Exception as e:
-            print(f"✗ GPU backend creation failed: {e}")
-            print("Falling back to CPU backend...")
-            return AerSimulator(
-                method='automatic',
-                device='CPU',
-                shots=shots,
-                max_parallel_threads=1
-            )
-    
+        return AerSimulator(
+            method=method,
+            device=device,
+            shots=self.shots
+        )
+
     def solve_single_run(self, qp, reps=1, maxiter=50):
-        """Runs QAOA using QAOAAnsatz and direct optimization."""
+        """Runs QAOA with dynamic backend selection."""
+        n_qubits = len(qp.variables)
+        
+        # 1. Dynamically get the backend for this specific problem size
+        current_backend = self._get_dynamic_backend(n_qubits)
+        
+        # 2. Initialize Estimator/Sampler with the chosen backend
+        estimator = BackendEstimator(backend=current_backend)
+        estimator.set_options(shots=self.shots)
+        
         history = []
         
-        n_qubits = len(qp.variables)
-        if n_qubits > 16:
-            reps = 1
-        elif n_qubits > 9:
-            reps = min(reps, 2)
-        else:
-            reps = min(reps, 3)
+        # Adjust reps based on complexity
+        if n_qubits > 16: reps = 1
         
         try:
-            # Convert QuadraticProgram to Ising Hamiltonian
             from qiskit_optimization.converters import QuadraticProgramToQubo
-            
             converter = QuadraticProgramToQubo()
             qubo = converter.convert(qp)
             operator, offset = qubo.to_ising()
             
-            print(f"  Converted to Ising: {n_qubits} qubits, offset={offset:.4f}")
-            
-            # Create QAOA ansatz circuit
             qaoa_circuit = QAOAAnsatz(cost_operator=operator, reps=reps)
             
-            print(f"  Created QAOAAnsatz with {reps} layers, {len(qaoa_circuit.parameters)} params")
-            
-            # Define cost function for optimization
             def cost_function(params):
-                # Pass params directly to the estimator for better performance
-                job = self.estimator.run(circuits=[qaoa_circuit], 
-                                         observables=[operator], 
-                                         parameter_values=[params])
-                result = job.result()
-                
-                # result.values is a numpy array of expectation values
-                energy = float(result.values[0])
-                
+                job = estimator.run(circuits=[qaoa_circuit], 
+                                    observables=[operator], 
+                                    parameter_values=[params])
+                energy = float(job.result().values[0])
                 history.append(energy)
                 return energy
             
-            # Initial parameters
             init_params = [0.1] * len(qaoa_circuit.parameters)
+            result_opt = minimize(cost_function, init_params, method='COBYLA', options={'maxiter': maxiter})
             
-            print(f"  Running COBYLA optimization...")
-            
-            # Run optimization
-            result_opt = minimize(
-                cost_function,
-                init_params,
-                method='COBYLA',
-                options={'maxiter': maxiter}
-            )
-            
-            # Get optimal energy (add back offset)
             optimal_energy = result_opt.fun + offset
             optimal_params = result_opt.x
             
-            print(f"  Optimization complete: energy={optimal_energy:.6f}, steps={len(history)}")
-            
             # --- SAMPLING BLOCK ---
             from qiskit.primitives import BackendSampler
-            sampler = BackendSampler(backend=self.backend)
+            sampler = BackendSampler(backend=current_backend)
             sampler.set_options(shots=self.shots)
             
-            # IMPORTANT: Create a copy and add measurements for the Sampler
             sampling_circuit = qaoa_circuit.measure_all(inplace=False)
-            
-            # Run the sampler with the circuit that has measurements
             job = sampler.run(circuits=[sampling_circuit], parameter_values=[optimal_params])
-            sampler_result = job.result()
+            quasi_dist = job.result().quasi_dists[0]
             
-            # Get the quasi-distribution (V1 Primitive style)
-            quasi_dist = sampler_result.quasi_dists[0]
-            
-            # Get the integer representation of the most probable bitstring
             best_bit_int = max(quasi_dist, key=quasi_dist.get)
-            
-            # Convert integer to bitstring, padded to match n_qubits
-            # Using 'b' for binary and '0{n_qubits}' for padding
             best_bitstring = format(best_bit_int, f'0{n_qubits}b')
-            
-            # Convert bitstring to list of floats (reverse for Qiskit bit ordering if necessary)
-            # Qiskit lists qubits as qn...q0, so we reverse to match your mapping [x_0_0, x_0_1...]
             x_values = [float(bit) for bit in best_bitstring[::-1]]
             
-            # Create result object
             from qiskit_optimization.algorithms import OptimizationResult, OptimizationResultStatus
             result = OptimizationResult(
                 x=np.array(x_values),
@@ -347,26 +274,16 @@ class GraphIsoAnalyzer:
                 status=OptimizationResultStatus.SUCCESS
             )
             
-            if not history:
-                history = [optimal_energy]
-            
         except Exception as e:
             print(f"  QAOA failed: {e}")
-            print(f"  Error type: {type(e).__name__}")
-            import traceback
-            traceback.print_exc()
-            print("  Falling back to classical solver...")
-            
-            # Fallback to classical
+            # Classical fallback...
             from qiskit_algorithms import NumPyMinimumEigensolver
             from qiskit_optimization.algorithms import MinimumEigenOptimizer
-            np_solver = NumPyMinimumEigensolver()
-            solver = MinimumEigenOptimizer(np_solver)
-            result = solver.solve(qp)
+            result = MinimumEigenOptimizer(NumPyMinimumEigensolver()).solve(qp)
             history = [result.fval]
         
         return result, history
-
+    
     def save_metadata(self):
         """Save experiment metadata."""
         metadata_file = os.path.join(
@@ -660,8 +577,8 @@ if __name__ == "__main__":
     use_gpu = use_gpu_input == 'y'
 
     # Safety limits
-    MAX_NODES = 6      # Maximum nodes to analyze (16 qubits max)
-    MAX_QUBITS = 40    # Hard limit for safety
+    MAX_NODES = 9      # Maximum nodes to analyze (16 qubits max)
+    MAX_QUBITS = 90    # Hard limit for safety
     PAIRS_PER_SIZE = 30  # Reasonable number of pairs
     RUNS_PER_PAIR = 3  # Few runs per pair
     SHOTS = 1024       # Number of shots for sampling

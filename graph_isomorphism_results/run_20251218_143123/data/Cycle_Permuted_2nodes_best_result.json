@@ -1,0 +1,15 @@
+{
+  "fval": 0.919921875,
+  "x": [
+    1.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "status": "OptimizationResultStatus.SUCCESS",
+  "metadata": {
+    "gpu_used": true,
+    "shots": 1024,
+    "n_runs": 3
+  }
+}
