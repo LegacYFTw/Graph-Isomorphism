@@ -1,0 +1,31 @@
+QUANTUM GRAPH ISOMORPHISM: STATISTICAL REPORT
+=============================================
+
+--- Graph Size N=2 ---
+  Optimal Threshold: < 1.019531
+  Classification Accuracy: 66.67%
+  Iso Mean (std):     0.981337 (0.046148)
+  Non-Iso Mean (std): 1.034722 (0.073643)
+  P-Value (Distinction):   8.7511e-02
+
+--- Graph Size N=3 ---
+  Optimal Threshold: < 2.353516
+  Classification Accuracy: 66.67%
+  Iso Mean (std):     278.528429 (415.887525)
+  Non-Iso Mean (std): 416.106988 (324.964197)
+  P-Value (Distinction):   4.4629e-01
+
+--- Graph Size N=4 ---
+  Optimal Threshold: < 15.701172
+  Classification Accuracy: 58.33%
+  Iso Mean (std):     5692.544010 (5013.820433)
+  Non-Iso Mean (std): 6305.255208 (3378.462805)
+  P-Value (Distinction):   7.2449e-01
+
+--- Graph Size N=5 ---
+  Optimal Threshold: < 65383.246094
+  Classification Accuracy: 79.17%
+  Iso Mean (std):     37649.803776 (26064.655328)
+  Non-Iso Mean (std): 59936.416233 (13224.762024)
+  P-Value (Distinction):   1.1276e-02
+
