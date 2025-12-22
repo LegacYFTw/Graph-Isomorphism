@@ -1,0 +1,19 @@
+QUANTUM GRAPH ISOMORPHISM: ULTIMATE ANALYSIS REPORT
+===================================================
+
+1. DATA SUMMARY
+   Total Runs: 84
+   Isomorphic Samples: 48
+   Non-Isomorphic Samples: 36
+
+2. MODEL PERFORMANCE RANKING
+              Model  Accuracy      AUC
+      Random Forest  0.750000 0.791667
+  Gradient Boosting  0.738095 0.790509
+            XGBoost  0.642857 0.719618
+     Neural Network  0.607143 0.642361
+          SVM (RBF)  0.595238 0.609375
+           LightGBM  0.595238 0.674479
+Logistic Regression  0.511905 0.596644
+
+   Best Performing Model: Random Forest (75.00%)
